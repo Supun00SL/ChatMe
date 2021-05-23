@@ -17,6 +17,10 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { getAllUsers } from '../../Api/User.firebase';
 import { BarIndicator } from 'react-native-indicators';
 import UserDto from '../../Api/Dto/User.dto';
+import { Badge } from 'react-native-elements/dist/badge/Badge';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { USER } from '../../Util/asyc-storage-const';
+import { getChats } from '../../Api/Chat.firebase';
 
 class Users extends React.Component {
 
@@ -25,15 +29,63 @@ class Users extends React.Component {
 
         this.state = {
             loading: false,
-            users: []
+            users: [],
+            currentUser: ""
         }
     }
 
     componentDidMount() {
         this.getUsers()
+        this.checkForUser()
         InteractionManager.runAfterInteractions(async () => {
             await changeNavBarColor('white')
         })
+    }
+
+    getChatsFromServer = async (otherEndUser) => {
+        try {
+            this.setState({
+                loading: true
+            }, async () => {
+                var response = await getChats(this.state.currentUser, otherEndUser)
+                var chat = []
+                if (!response.empty) {
+                    if (response.docs.length > 0) {
+                        response.docs.forEach(async (doc) => {
+                            var ref = await doc.data().message.get()
+                            if (ref.exists) {
+                                var refDoc = ref.ref
+                                chat.concat(refDoc._documentPath._parts)
+                                this.props.navigation.navigate('Chat', {
+                                    chat: refDoc._documentPath._parts,
+                                    otheruser: otherEndUser
+                                })
+                                this.resetScreen()
+                            } else {
+                                this.resetScreen()
+                            }
+                        })
+                    } else {
+                        this.resetScreen()
+                    }
+                } else {
+                    this.resetScreen()
+                }
+            })
+
+        } catch (error) {
+            console.log(error)
+            this.resetScreen()
+        }
+    }
+
+    checkForUser = async () => {
+        var user = await AsyncStorage.getItem(USER)
+        if (user) {
+            this.setState({
+                currentUser: user
+            })
+        }
     }
 
     getUsers = async () => {
@@ -70,8 +122,10 @@ class Users extends React.Component {
         })
     }
 
-    chatWithUser = () => {
-
+    chatWithUser = async (otherEndUser) => {
+        if (otherEndUser != this.state.currentUser) {
+            await this.getChatsFromServer(otherEndUser)
+        }
     }
 
     renderLevel(param) {
@@ -149,7 +203,7 @@ class Users extends React.Component {
                                     end: { x: 0.1, y: 0 }
                                 }}
                                 ViewComponent={LinearGradient}
-                                onPress={() => this.chatWithUser()}>
+                                onPress={() => this.chatWithUser(user.username)}>
                                 <Avatar
                                     icon={{ name: 'user', type: 'font-awesome', color: colors.primary }}
                                     activeOpacity={0.7}
@@ -159,8 +213,13 @@ class Users extends React.Component {
                                     overlayContainerStyle={{ backgroundColor: 'white' }} />
                                 <ListItem.Content>
                                     <ListItem.Title style={styles.userCardTitle}>
-                                        <View style={{ justifyContent: 'center' }}>
+                                        <View style={{ justifyContent: 'center', flexDirection: 'row' }}>
                                             <Text style={styles.listItemHeaderText}>{"@" + user.username}</Text>
+                                            {(user.username == this.state.currentUser) ? (
+                                                <Badge value="Me" badgeStyle={{ backgroundColor: 'white', padding: 1, marginLeft: 5 }} containerStyle={{ margin: 1 }} textStyle={{ fontFamily: "OpenSans-Regular", color: colors.primary }} />
+                                            ) : (
+                                                <></>
+                                            )}
                                         </View>
                                     </ListItem.Title>
                                     <ListItem.Subtitle>

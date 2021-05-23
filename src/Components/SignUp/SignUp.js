@@ -24,6 +24,8 @@ import {
     UIActivityIndicator,
     WaveIndicator,
 } from 'react-native-indicators';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { USER } from '../../Util/asyc-storage-const';
 
 
 class SignIn extends React.Component {
