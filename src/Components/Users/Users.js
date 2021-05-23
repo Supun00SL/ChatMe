@@ -20,7 +20,7 @@ import UserDto from '../../Api/Dto/User.dto';
 import { Badge } from 'react-native-elements/dist/badge/Badge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { USER } from '../../Util/asyc-storage-const';
-import { getChats } from '../../Api/Chat.firebase';
+import { createNewChat, getChats, linkNewChat, linkOtherEndNewChat } from '../../Api/Chat.firebase';
 
 class Users extends React.Component {
 
@@ -37,6 +37,7 @@ class Users extends React.Component {
     componentDidMount() {
         this.getUsers()
         this.checkForUser()
+        // this.CreateNewChat("test")
         InteractionManager.runAfterInteractions(async () => {
             await changeNavBarColor('white')
         })
@@ -52,9 +53,10 @@ class Users extends React.Component {
                 if (!response.empty) {
                     if (response.docs.length > 0) {
                         response.docs.forEach(async (doc) => {
-                            var ref = await doc.data().message.get()
-                            if (ref.exists) {
-                                var refDoc = ref.ref
+                            var ref = await (await doc.ref.get()).data()
+                            console.log(ref)
+                            if (ref) {
+                                var refDoc = ref.message
                                 chat.concat(refDoc._documentPath._parts)
                                 this.props.navigation.navigate('Chat', {
                                     chat: refDoc._documentPath._parts,
@@ -62,17 +64,49 @@ class Users extends React.Component {
                                 })
                                 this.resetScreen()
                             } else {
-                                this.resetScreen()
                             }
+                            this.resetScreen()
                         })
                     } else {
+                        
                         this.resetScreen()
                     }
                 } else {
-                    this.resetScreen()
+                    this.CreateNewChat(otherEndUser)
                 }
             })
 
+        } catch (error) {
+            console.log(error)
+            this.resetScreen()
+        }
+    }
+
+    CreateNewChat = async (otherEndUser) => {
+        try {
+            var newchat = await createNewChat(this.state.currentUser)
+            // console.log(newchat.parent.parent.path)
+            if (newchat.parent.parent.path) {
+                var ref = await (await newchat.parent.parent.get()).ref
+                var refPaths = newchat.parent.parent.path
+
+                console.log(ref)
+
+                await linkNewChat(this.state.currentUser, {
+                    with: otherEndUser,
+                    message: ref
+                })
+                await linkOtherEndNewChat(otherEndUser, {
+                    with: this.state.currentUser,
+                    message: ref
+                })
+
+                this.props.navigation.navigate('Chat', {
+                    chat: refPaths.split("/"),
+                    otheruser: otherEndUser
+                })
+            }
+            this.resetScreen()
         } catch (error) {
             console.log(error)
             this.resetScreen()

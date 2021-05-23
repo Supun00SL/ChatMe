@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Animated, Easing, SafeAreaView, StatusBar, Text, View } from 'react-native';
+import { Animated, Easing, SafeAreaView, StatusBar, Text, View,Image } from 'react-native';
 import styles from './Splash.style';
 
 class Splash extends React.Component {
@@ -55,7 +55,11 @@ class Splash extends React.Component {
       <SafeAreaView style={styles.mainContainor}>
         <StatusBar barStyle={'dark-content'} />
         <View style={styles.subContainor}>
-          <Animated.Text style={{ opacity }}>Splash app</Animated.Text>
+          <Animated.Image source={require('../../Assets/logo.png')} style={{
+            opacity,
+            width: 75,
+            height: 75
+          }} />
         </View>
       </SafeAreaView>
     )

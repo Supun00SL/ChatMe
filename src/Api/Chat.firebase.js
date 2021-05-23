@@ -25,4 +25,32 @@ async function addChat(document, message) {
         .add(message)
 }
 
-export { getChats, getSingleChat, addChat }
+async function createNewChat(ownUser) {
+    return firestore()
+        .collection(FirebaseCollctionEnum.CHATS)
+        .doc()
+        .collection(FirebaseCollctionEnum.CHATSUB)
+        .add({
+            text: "Hello",
+            createdAt: new Date(),
+            user: ownUser
+        })
+}
+
+async function linkNewChat(ownUser, messageRefObj) {
+    return firestore()
+        .collection(FirebaseCollctionEnum.USERS)
+        .doc(ownUser)
+        .collection(FirebaseCollctionEnum.SUBCHATS)
+        .add(messageRefObj)
+}
+
+async function linkOtherEndNewChat(otherUser, messageRefObj) {
+    return firestore()
+        .collection(FirebaseCollctionEnum.USERS)
+        .doc(otherUser)
+        .collection(FirebaseCollctionEnum.SUBCHATS)
+        .add(messageRefObj)
+}
+
+export { getChats, getSingleChat, addChat, createNewChat, linkNewChat,linkOtherEndNewChat }

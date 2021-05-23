@@ -8,7 +8,11 @@ export default StyleSheet.create({
     },
     subContainor: {
         flex: 1,
-        justifyContent:'center',
-        alignItems:'center'
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    logo: {
+        width: 75,
+        height: 75
     }
 });
